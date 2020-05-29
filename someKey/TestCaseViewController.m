@@ -48,6 +48,10 @@
 }
 
 
+-(void)dealloc{
+    [self zz_removeObserverforKeyPath:NSStringFromSelector(@selector(name))];
+}
+
 
 
 @end

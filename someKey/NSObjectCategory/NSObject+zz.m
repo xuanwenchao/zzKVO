@@ -58,7 +58,7 @@ static NSString * generateSetterStringFromKey(NSString* strKey){
     NSString *strTailString  = [strKey substringFromIndex:1];
     
     //生成setter方法的字符串
-    NSString *strSetter = [NSString stringWithFormat:@"set%@%@",strFirstLetter,strTailString];
+    NSString *strSetter = [NSString stringWithFormat:@"set%@%@:",strFirstLetter,strTailString];
     
     return strSetter;
 }
@@ -75,6 +75,7 @@ static SEL generateGetterSELWithSetterSEL(SEL selForSetter){
     NSString *strTemp   = [strSetter substringFromIndex:3];
     NSString *strGetter = [[strTemp substringWithRange:NSMakeRange(0, 1)] lowercaseString];
     strGetter = [strTemp stringByReplacingCharactersInRange:NSMakeRange(0, 1) withString:strGetter];
+    strGetter = [strGetter substringToIndex:strGetter.length-1];//去掉后面的冒号
     
     //通过字符串生成对应的SEL
     SEL selGetter = NSSelectorFromString(strGetter);
@@ -147,6 +148,14 @@ static void setter_for_dynamic_class(id self, SEL _cmd, id idNewValue){
     NSString *strSetterForKey = generateSetterStringFromKey(strKeyPath);
     SEL selForSetter          = NSSelectorFromString(strSetterForKey);
     
+    unsigned int methodC = 0;
+    Method *methodL = class_copyMethodList([self class], &methodC);
+    unsigned int i;
+    for(i = 0; i < methodC; i++) {
+        NSLog(@"MT: %@",NSStringFromSelector(method_getName(methodL[i])));
+    }
+    free(methodL);
+    
     //判断当前实列对象，是否有KEY对应的setter方法,因为需要通过重写setter来实现监控数据变化
     Method methodForSetter    = class_getInstanceMethod([self class], selForSetter);
     if(!methodForSetter){
@@ -174,7 +183,7 @@ static void setter_for_dynamic_class(id self, SEL _cmd, id idNewValue){
         SEL sel = method_getName(methodList[i]);
         if (selForSetter == sel) {
             bIsFoundSetter = YES;
-            break;;
+            break;
         }
     }
     free(methodList);
@@ -228,7 +237,7 @@ static void setter_for_dynamic_class(id self, SEL _cmd, id idNewValue){
     objc_setAssociatedObject(self, kAssociatedObservedPropertyName, zzObserves,OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
--(NSMutableArray*)getZzObserves{
+-(NSMutableArray*)zzObserves{
     NSMutableArray *array = objc_getAssociatedObject(self, kAssociatedObservedPropertyName);
     return array;
 }
